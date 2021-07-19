@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "997889593988",
+    "project_id": "eigital-test-37ef4",
+    "storage_bucket": "eigital-test-37ef4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:997889593988:android:2a355af99d2c2087fba8d1",
+        "android_client_info": {
+          "package_name": "com.victorescamillan.eigital_test"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "997889593988-8hllsh9skn3cbrl5tr12pn5v6v5426j3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7pqAWyhx0BpZKMf6czY2FLGmIHjxdFeg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "997889593988-8hllsh9skn3cbrl5tr12pn5v6v5426j3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
