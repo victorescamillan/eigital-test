@@ -1,7 +1,6 @@
 import 'dart:math';
-
 import 'package:bloc/bloc.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapBloc extends Bloc<MapState, LatLng>{
   MapBloc(LatLng initialState) : super(initialState);
@@ -16,9 +15,6 @@ class MapBloc extends Bloc<MapState, LatLng>{
     Random random = new Random();
     double randomLat = random.nextDouble();
     double randomLng = random.nextDouble();
-    print('_generateRandomLocation $origin');
-    print('randomLat $randomLat');
-    print('randomLng $randomLng');
     return LatLng(origin.latitude + randomLat, origin.longitude + randomLng);
   }
 }

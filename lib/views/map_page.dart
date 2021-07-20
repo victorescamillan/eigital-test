@@ -1,9 +1,10 @@
+import 'dart:async';
+import 'dart:math';
 import 'package:eigital_test/blocs/map_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapPage extends StatefulWidget {
   @override
@@ -13,7 +14,23 @@ class MapPage extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   Position _currentLocation;
-  Position _tempLocation;
+
+  Completer<GoogleMapController> _controller = Completer();
+
+  static final LatLng center = const LatLng(-33.86711, 151.1947171);
+  Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
+
+  MarkerId selectedMarker;
+  int _markerIdCounter = 1;
+
+  static final CameraPosition _kLake = CameraPosition(
+      bearing: 192.8334901395799,
+      target: LatLng(37.43296265331129, -122.08832357078792),
+      tilt: 59.440717697143555,
+  );
+
+  CameraPosition _randomPosition;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -23,43 +40,93 @@ class _MapPageState extends State<MapPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bloc = BlocProvider.of<MapBloc>(context);
+    final bloc = BlocProvider.of<MapBloc>(context, listen: true);
     if(_currentLocation == null){
       return Center(child: CircularProgressIndicator(strokeWidth: 2,),);
     }
-    return FlutterMap(
-      options: MapOptions(
-        center: LatLng(_currentLocation.latitude, _currentLocation.longitude),
-        zoom: 13.0,
-      ),
-      layers: [
-        TileLayerOptions(
-            urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            subdomains: ['a', 'b', 'c']
-        ),
-        MarkerLayerOptions(
-          markers: [
-            Marker(
-              width: 80.0,
-              height: 80.0,
-              point: LatLng(_currentLocation.latitude, _currentLocation.longitude),
-              builder: (ctx) =>
-                  InkWell(
-                    onTap: () => bloc.add(MapState(location: LatLng(_currentLocation.latitude, _currentLocation.longitude))),
-                    child: Container(
-                      child: Icon(Icons.location_on, color: Colors.redAccent, size: 50,),
-                    ),
-                  )
-            ),
-          ],
-        ),
-      ],
-    );
+
+    return _displayGoogleMap(bloc);
   }
 
-  _generateRandomLocation() {
-    var res = Geolocator.distanceBetween(_currentLocation.latitude, _currentLocation.longitude, _currentLocation.latitude, _currentLocation.longitude);    print('_generateRandomLocation $res');
+  void _addMarker() {
+    final MarkerId markerId = MarkerId('marker_id_1');
 
+    final Marker marker = Marker(
+      markerId: markerId,
+      position: LatLng(
+        _currentLocation.latitude + sin(_markerIdCounter * pi / 6.0) / 20.0,
+        _currentLocation.longitude + cos(_markerIdCounter * pi / 6.0) / 20.0,
+      ),
+      infoWindow: InfoWindow(title: 'markerIdVal', snippet: '*'),
+      onTap: () {
+        _onMarkerTapped(markerId);
+      },
+    );
+
+    setState(() {
+      markers[markerId] = marker;
+    });
+  }
+
+  void _onMarkerTapped(MarkerId markerId) {
+    print('markerId $markerId');
+    // final Marker tappedMarker = markers[markerId];
+    // if (tappedMarker != null) {
+    //   setState(() {
+    //     final MarkerId previousMarkerId = selectedMarker;
+    //     if (previousMarkerId != null && markers.containsKey(previousMarkerId)) {
+    //       final Marker resetOld = markers[previousMarkerId]
+    //           .copyWith(iconParam: BitmapDescriptor.defaultMarker);
+    //       markers[previousMarkerId] = resetOld;
+    //     }
+    //     selectedMarker = markerId;
+    //     final Marker newMarker = tappedMarker.copyWith(
+    //       iconParam: BitmapDescriptor.defaultMarkerWithHue(
+    //         BitmapDescriptor.hueGreen,
+    //       ),
+    //     );
+    //     markers[markerId] = newMarker;
+    //   });
+    // }
+  }
+
+
+  Future<void> _goToRandomPosition(LatLng latLng) async {
+    CameraPosition randomPosition = CameraPosition(
+      bearing: 192.8334901395799,
+      target: latLng,
+      zoom: 8.0,
+      tilt: 59.440717697143555,
+    );
+
+    final GoogleMapController controller = await _controller.future;
+    controller.animateCamera(CameraUpdate.newCameraPosition(randomPosition));
+  }
+
+  Widget _displayGoogleMap(MapBloc bloc){
+    bloc.state == null ? _addMarker() : _goToRandomPosition(bloc.state);
+    return Scaffold(
+      body: GoogleMap(
+        myLocationEnabled: true,
+        mapType: MapType.normal,
+        initialCameraPosition:
+        CameraPosition(
+          target: LatLng(_currentLocation.latitude, _currentLocation.longitude),
+          zoom: 12.0,
+        ),
+        markers: Set<Marker>.of(markers.values),
+        onMapCreated: (GoogleMapController controller) {
+          _controller.complete(controller);
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          bloc.add(MapState(location: LatLng(_currentLocation.latitude, _currentLocation.longitude)));
+        },
+        label: Text('Random Location'),
+        icon: Icon(Icons.directions),
+      ),
+    );
   }
 
   Future<void> _getCurrentPosition() async {
@@ -99,7 +166,6 @@ class _MapPageState extends State<MapPage> {
     var position = await Geolocator.getCurrentPosition();
     setState(() {
       _currentLocation = position;
-      _tempLocation = position;
     });
   }
 }
